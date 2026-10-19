@@ -21,6 +21,8 @@ interface TicketFormProps {
   employeeChoices?: Employee[];
   isAdmin?: boolean;
   onAddEmployee?: (name: string) => Promise<boolean>;
+  /** Values to prefill a brand-new ticket with (e.g. from a dispatch job). */
+  initial?: Partial<TicketDraft>;
 }
 
 export interface TicketDraft {
@@ -181,19 +183,20 @@ export function TicketForm({
   defaultCreatedBy = '',
   employeeChoices = [],
   isAdmin = false,
+  initial,
 }: TicketFormProps) {
-  const [jobName, setJobName] = useState(editing?.job_name ?? '');
+  const [jobName, setJobName] = useState(editing?.job_name ?? initial?.job_name ?? '');
   const [newJobName, setNewJobName] = useState('');
   const [addingJob, setAddingJob] = useState(false);
-  const [jobDate, setJobDate] = useState(editing?.job_date ?? today());
-  const [crew, setCrew] = useState<string[]>(editing?.names ?? []);
+  const [jobDate, setJobDate] = useState(editing?.job_date ?? initial?.job_date ?? today());
+  const [crew, setCrew] = useState<string[]>(editing?.names ?? initial?.names ?? []);
   const [createdBy, setCreatedBy] = useState(
-    editing?.created_by ?? findEmployeeName(employeeChoices, defaultCreatedBy) ?? defaultCreatedBy,
+    editing?.created_by ?? initial?.created_by ?? findEmployeeName(employeeChoices, defaultCreatedBy) ?? defaultCreatedBy,
   );
-  const [startTime, setStartTime] = useState(editing?.start_time ?? '');
-  const [endTime, setEndTime] = useState(editing?.end_time ?? '');
-  const [tasks, setTasks] = useState<string[]>(editing?.tasks ?? []);
-  const [materials, setMaterials] = useState<string[]>(editing?.materials ?? []);
+  const [startTime, setStartTime] = useState(editing?.start_time ?? initial?.start_time ?? '');
+  const [endTime, setEndTime] = useState(editing?.end_time ?? initial?.end_time ?? '');
+  const [tasks, setTasks] = useState<string[]>(editing?.tasks ?? initial?.tasks ?? []);
+  const [materials, setMaterials] = useState<string[]>(editing?.materials ?? initial?.materials ?? []);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
