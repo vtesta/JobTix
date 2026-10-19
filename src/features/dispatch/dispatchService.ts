@@ -163,16 +163,17 @@ export async function deleteDispatchJob(id: string): Promise<void> {
 }
 
 /** Ensure a job name exists in the shared job_names library. */
-export async function ensureJobName(name: string): Promise<void> {
+export async function ensureJobName(orgId: string, name: string): Promise<void> {
   const clean = name.trim();
   if (!clean) return;
   const { data: existing } = await supabase
     .from('job_names')
     .select('id')
+    .eq('organization_id', orgId)
     .eq('name', clean)
     .maybeSingle();
   if (existing) return;
-  const { error } = await supabase.from('job_names').insert({ name: clean });
+  const { error } = await supabase.from('job_names').insert({ name: clean, organization_id: orgId });
   if (error) {
     // A duplicate from a concurrent add is fine — the name exists either way.
     const message = error.message ?? '';
