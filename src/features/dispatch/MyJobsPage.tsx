@@ -4,14 +4,21 @@ import { formatDate } from '@/lib/format';
 import { EmptyState, SkeletonDispatchDay } from '@/components/ui/States';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { Modal } from '@/components/ui/Modal';
 import { Page, PageHeader } from '@/components/ui/Page';
+import { useToast } from '@/components/ui/Toast';
+import { TicketForm, type TicketDraft } from '@/features/tickets/TicketForm';
+import { useEmployees, useJobNames } from '@/features/shared/workspaceService';
+import { createTicket, fetchTickets, syncTicketItems } from '@/features/tickets/ticketsService';
+import type { Ticket } from '@/config/types';
 import {
   acknowledgeAssignment,
+  ensureJobName,
   fetchMyAssignments,
   type DispatchJob,
   type JobAssignment,
 } from './dispatchService';
-import { CalendarDays, CheckCheck, Clock, HardHat, MapPin } from 'lucide-react';
+import { CalendarDays, CheckCheck, ChevronRight, ClipboardList, Clock, HardHat, MapPin } from 'lucide-react';
 
 type MyAssignment = JobAssignment & { job: DispatchJob };
 
@@ -23,10 +30,16 @@ function todayIso(): string {
 }
 
 export function MyJobsPage({ orgId }: { orgId: string }) {
-  const { user } = useAuth();
+  const { user, currentMembership } = useAuth();
+  const { toast } = useToast();
+  const { jobs, addJob } = useJobNames(orgId);
+  const { employees } = useEmployees(orgId);
   const [assignments, setAssignments] = useState<MyAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [ticketJob, setTicketJob] = useState<DispatchJob | null>(null);
+  const [confirmJob, setConfirmJob] = useState<DispatchJob | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,6 +61,18 @@ export function MyJobsPage({ orgId }: { orgId: string }) {
       cancelled = true;
     };
   }, [orgId, user?.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchTickets(orgId)
+      .then((rows) => {
+        if (!cancelled) setTickets(rows);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [orgId]);
 
   const groups = useMemo(() => {
     const today = todayIso();
@@ -77,6 +102,26 @@ export function MyJobsPage({ orgId }: { orgId: string }) {
     }
   };
 
+  const hasTicketForJob = (job: DispatchJob) =>
+    tickets.some(
+      (t) =>
+        t.job_name.trim().toLowerCase() === job.name.trim().toLowerCase() &&
+        t.job_date === job.job_date,
+    );
+
+  const startTicket = (job: DispatchJob) => {
+    if (hasTicketForJob(job)) setConfirmJob(job);
+    else setTicketJob(job);
+  };
+
+  const saveTicket = async (draft: TicketDraft, submit: boolean) => {
+    const created = await createTicket({ ...draft, organization_id: orgId });
+    await syncTicketItems(created.id, draft.tasks, draft.materials, orgId);
+    void ensureJobName(orgId, draft.job_name);
+    setTickets((prev) => [created, ...prev]);
+    toast(submit ? 'Ticket submitted.' : 'Ticket saved as a draft.');
+  };
+
   return (
     <Page>
       <PageHeader
@@ -88,6 +133,37 @@ export function MyJobsPage({ orgId }: { orgId: string }) {
         <p className="mb-3 rounded-lg border border-error-600/40 bg-error-600/10 px-3 py-2 text-xs text-error-400">
           {error}
         </p>
+      )}
+
+      {!loading && groups.today.length > 0 && (
+        <div className="mb-4 space-y-2">
+          {groups.today.map((a) => {
+            const duplicate = hasTicketForJob(a.job);
+            return (
+              <button
+                key={`active-${a.id}`}
+                type="button"
+                onClick={() => startTicket(a.job)}
+                className="flex w-full items-center gap-3 rounded-xl border border-green-500/40 bg-green-500/10 px-4 py-3 text-left transition-colors hover:bg-green-500/15"
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-green-500/15 text-green-300">
+                  <ClipboardList size={17} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-bold text-green-300">
+                    Active job today: {a.job.name}
+                  </span>
+                  <span className="block text-2xs text-green-200/70">
+                    {duplicate
+                      ? 'A ticket already exists for this job today — tap to add another'
+                      : 'Tap to open a ticket — the details are filled in for you'}
+                  </span>
+                </span>
+                <ChevronRight size={16} className="shrink-0 text-green-300" />
+              </button>
+            );
+          })}
+        </div>
       )}
 
       {loading ? (
@@ -115,6 +191,59 @@ export function MyJobsPage({ orgId }: { orgId: string }) {
             assignments={groups.past}
           />
         </div>
+      )}
+
+      {ticketJob && (
+        <TicketForm
+          open
+          onClose={() => setTicketJob(null)}
+          onSave={saveTicket}
+          jobs={jobs}
+          employees={employees}
+          allowNewJob
+          onAddJob={(name) => addJob(name)}
+          initial={{
+            job_name: ticketJob.name,
+            job_date: ticketJob.job_date,
+            names: currentMembership?.name ? [currentMembership.name] : [],
+            start_time: ticketJob.start_time ?? '',
+            end_time: '',
+            tasks: [...ticketJob.tasks],
+            materials: [...ticketJob.materials],
+            created_by: currentMembership?.name ?? '',
+          }}
+          defaultCreatedBy={currentMembership?.name ?? ''}
+        />
+      )}
+
+      {confirmJob && (
+        <Modal
+          open
+          onClose={() => setConfirmJob(null)}
+          title="Duplicate ticket?"
+          width="sm"
+          footer={
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" onClick={() => setConfirmJob(null)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  setTicketJob(confirmJob);
+                  setConfirmJob(null);
+                }}
+              >
+                Create anyway
+              </Button>
+            </div>
+          }
+        >
+          <p className="text-sm text-ink-200">
+            A ticket for <span className="font-bold">{confirmJob.name}</span> on{' '}
+            {formatDate(confirmJob.job_date)} already exists. Are you sure you want to create a
+            duplicate ticket?
+          </p>
+        </Modal>
       )}
     </Page>
   );
