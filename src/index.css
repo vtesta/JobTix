@@ -1,0 +1,47 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply antialiased;
+  }
+  body {
+    @apply bg-ink-950 text-ink-100 font-sans;
+  }
+  h1, h2, h3, h4 {
+    @apply font-display tracking-tight;
+  }
+  ::selection {
+    @apply bg-green-500/30 text-white;
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: theme('colors.ink.600') transparent;
+  }
+  input, select, textarea {
+    color-scheme: dark;
+  }
+}
+
+@layer components {
+  .field-label {
+    @apply block text-2xs font-semibold uppercase tracking-wider text-ink-400 mb-1.5;
+  }
+  .field-input {
+    @apply w-full rounded-lg border border-ink-600 bg-ink-850 px-3 py-2 text-sm text-ink-100
+      placeholder:text-ink-500 outline-none transition-colors
+      focus:border-green-500 focus:ring-2 focus:ring-green-500/20;
+  }
+  .field-error {
+    @apply border-error-500 focus:border-error-500 focus:ring-error-500/20;
+  }
+  .card {
+    @apply rounded-2xl bg-ink-900 shadow-card;
+  }
+  .skeleton {
+    @apply rounded-lg bg-gradient-to-r from-ink-800 via-ink-700 to-ink-800 bg-[length:400px_100%] animate-shimmer;
+  }
+}

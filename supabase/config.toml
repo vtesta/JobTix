@@ -1,0 +1,17 @@
+[functions.stripe-checkout]
+verify_jwt = true
+
+[functions.stripe-portal]
+verify_jwt = true
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.create-team-member]
+verify_jwt = true
+
+[functions.reset-team-member-password]
+verify_jwt = true
+
+[functions.invoice-ai]
+verify_jwt = true
