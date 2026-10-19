@@ -218,7 +218,7 @@ export function DispatchPage({ orgId }: DispatchPageProps) {
         },
         currentMembership?.name ?? '',
       );
-      void ensureJobName(clean);
+      void ensureJobName(orgId, clean);
       for (const file of stagedFiles) {
         try {
           const record = await uploadDispatchFile(orgId, created, file, currentMembership?.name ?? '');
@@ -228,7 +228,6 @@ export function DispatchPage({ orgId }: DispatchPageProps) {
         }
       }
       setJobs((prev) => [...prev, created].sort((a, b) => a.job_date.localeCompare(b.job_date)));
-      const dayLabel = formatDate(day);
       toast(`Job added to ${dayLabel}`);
       resetForm();
       setFormOpen(false);
@@ -459,7 +458,7 @@ export function DispatchPage({ orgId }: DispatchPageProps) {
             Add details for the crew
             <span className="ml-auto text-2xs font-normal text-ink-400">
               {tasks.length + materials.length > 0 || stagedFiles.length > 0
-                ? `${tasks.length + materials.length} item${tasks.length + materials.length === 1 ? '' : 's'}${stagedFiles.length > 0 ? ` · ${stagedFiles.length} file${stagedFiles.length === 1 ? '' : 's'}` : ''}`
+                ? `${tasks.length + materials.length} item${tasks.length + materials.length === 1 ? '' : 's'}${stagedFiles.length > 0 ? ` · ${stagedFiles.length} file${stagedFiles.length === 1 ? '' : 's'}` : ''}
                 : 'optional'}
             </span>
           </button>
