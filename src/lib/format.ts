@@ -1,3 +1,5 @@
+export const APP_LOCALE = 'en-US';
+
 export function formatTime12h(value: string): string {
   if (!value) return '';
   const [hStr, mStr] = value.split(':');
@@ -30,21 +32,21 @@ export function formatDate(iso: string): string {
   if (!iso) return '';
   const d = new Date(`${iso}T00:00:00`);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  return d.toLocaleDateString(APP_LOCALE, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 export function formatDateShort(iso: string): string {
   if (!iso) return '';
   const d = new Date(`${iso}T00:00:00`);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return d.toLocaleDateString(APP_LOCALE, { month: 'short', day: 'numeric' });
 }
 
 export function formatDateTime(iso: string | null): string {
   if (!iso) return '';
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  return d.toLocaleString(APP_LOCALE, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
 export function startOfWeek(ref = new Date(), weekStartDay = 0): string {

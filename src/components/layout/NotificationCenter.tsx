@@ -8,6 +8,7 @@ import {
   type AppNotification,
 } from '@/features/dispatch/dispatchService';
 import { Bell, CheckCheck } from 'lucide-react';
+import { APP_LOCALE } from '@/lib/format';
 
 export function NotificationCenter({ onNavigate }: { onNavigate?: (pageId: string) => void }) {
   const { user, organization } = useAuth();
@@ -126,9 +127,9 @@ export function NotificationCenter({ onNavigate }: { onNavigate?: (pageId: strin
                     </div>
                     {n.body && <p className="mt-0.5 text-2xs text-ink-400">{n.body}</p>}
                     <p className="mt-1 text-2xs text-ink-600">
-                      {new Date(n.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                      {new Date(n.created_at).toLocaleDateString(APP_LOCALE, { month: 'short', day: 'numeric' })}
                       {' · '}
-                      {new Date(n.created_at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
+                      {new Date(n.created_at).toLocaleTimeString(APP_LOCALE, { hour: 'numeric', minute: '2-digit' })}
                     </p>
                   </button>
                 ))

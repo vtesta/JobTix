@@ -7,7 +7,7 @@ import { useAuth } from '@/hooks/AuthContext';
 import { updateOrganization } from '@/features/team/teamService';
 import { useBilling } from '@/features/billing/billingService';
 import { supabase } from '@/lib/supabase';
-import { isEmail, sanitizeText } from '@/lib/format';
+import { APP_LOCALE, isEmail, sanitizeText } from '@/lib/format';
 import { PLANS, planById } from '@/config/app';
 import {
   Building2,
@@ -248,7 +248,7 @@ export function SettingsPage() {
           <div>
             <p className="text-sm font-semibold text-ink-100">Workspace</p>
             <p className="mt-0.5 text-xs text-ink-400">
-              Your workspace was created {new Date(organization.created_at).toLocaleDateString()} and runs on the{' '}
+              Your workspace was created {new Date(organization.created_at).toLocaleDateString(APP_LOCALE)} and runs on the{' '}
               <span className="capitalize text-ink-200">{organization.subscription_plan}</span> plan.
             </p>
           </div>
